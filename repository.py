@@ -151,6 +151,25 @@ def saldo_total() -> float:
     return sum(saldo_da_conta(c.id) for c in contas)
 
 
+def resumo_mes(ano_mes: Optional[str] = None) -> dict:
+    """Total de receitas e despesas de um mês (formato 'AAAA-MM'). Usa o mês atual se None."""
+    from datetime import date as _date
+    ano_mes = ano_mes or _date.today().strftime("%Y-%m")
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """SELECT
+             COALESCE(SUM(CASE WHEN tipo = 'receita' THEN valor ELSE 0 END), 0) AS receitas,
+             COALESCE(SUM(CASE WHEN tipo = 'despesa' THEN valor ELSE 0 END), 0) AS despesas
+           FROM transacoes WHERE substr(data, 1, 7) = ?""",
+        (ano_mes,),
+    )
+    r = cursor.fetchone()
+    conn.close()
+    return {"receitas": r["receitas"], "despesas": r["despesas"]}
+
+
 def resumo_por_categoria() -> List[dict]:
     """Total gasto/recebido por categoria (útil para gráficos)."""
     conn = get_connection()
