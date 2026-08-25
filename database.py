@@ -40,18 +40,36 @@ def criar_tabelas():
     """)
 
     cursor.execute("""
+        CREATE TABLE IF NOT EXISTS subcategorias (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            categoria_id INTEGER NOT NULL,
+            nome TEXT NOT NULL,
+            FOREIGN KEY (categoria_id) REFERENCES categorias (id) ON DELETE CASCADE,
+            UNIQUE (categoria_id, nome)
+        )
+    """)
+
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS transacoes (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             conta_id INTEGER NOT NULL,
             categoria_id INTEGER NOT NULL,
+            subcategoria_id INTEGER,
             valor REAL NOT NULL,
             data TEXT NOT NULL,
             descricao TEXT,
             tipo TEXT NOT NULL CHECK (tipo IN ('receita', 'despesa')),
             FOREIGN KEY (conta_id) REFERENCES contas (id) ON DELETE CASCADE,
-            FOREIGN KEY (categoria_id) REFERENCES categorias (id) ON DELETE RESTRICT
+            FOREIGN KEY (categoria_id) REFERENCES categorias (id) ON DELETE RESTRICT,
+            FOREIGN KEY (subcategoria_id) REFERENCES subcategorias (id) ON DELETE SET NULL
         )
     """)
+
+    # Migração: bancos criados antes da subcategoria_id existir ganham a coluna agora.
+    try:
+        cursor.execute("ALTER TABLE transacoes ADD COLUMN subcategoria_id INTEGER REFERENCES subcategorias(id) ON DELETE SET NULL")
+    except sqlite3.OperationalError:
+        pass  # coluna já existe
 
     conn.commit()
     conn.close()

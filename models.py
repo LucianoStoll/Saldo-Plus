@@ -23,6 +23,13 @@ class Categoria:
 
 
 @dataclass
+class Subcategoria:
+    id: Optional[int]
+    categoria_id: int
+    nome: str
+
+
+@dataclass
 class Transacao:
     id: Optional[int]
     conta_id: int
@@ -31,3 +38,4 @@ class Transacao:
     data: str  # formato ISO: YYYY-MM-DD
     descricao: str
     tipo: str  # 'receita' ou 'despesa'
+    subcategoria_id: Optional[int] = None
